@@ -1,12 +1,13 @@
+import os
 import requests
-from flask import Flask, redirect, render_template_string
+from flask import Flask, redirect, jsonify
 
 app = Flask(__name__)
 
 # The target API URL
 API_URL = "https://www.kcex.com/uc/user_api/sns/x/config"
 
-# Headers exactly as provided in your request
+# Headers and Cookies from your original request
 HEADERS = {
     "Host": "www.kcex.com",
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
@@ -30,7 +31,6 @@ HEADERS = {
     "Te": "trailers"
 }
 
-# Cookies from your request
 COOKIES = {
     "NEXT_LOCALE": "en-US",
     "kcex_base_fiat": "USD",
@@ -39,36 +39,46 @@ COOKIES = {
     "kcex_exchange_order_confirmation": "[1,2,3,4,5,100,101,\"FOLLOW_LIMIT_ORDER\"]"
 }
 
+@app.route('/')
+def health_check():
+    return "Server is running. Use /start-auth to initiate the request."
+
 @app.route('/start-auth')
 def start_auth():
-    # 1. Prepare the query parameters (the 'callback' part)
+    # Parameters provided in your original GET request
     params = {
         'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/5a042f89-c5cf-4180-8903-7a5b65a4455f'
     }
 
     try:
-        # 2. Perform the GET request to the KCEX API
-        response = requests.get(API_URL, headers=HEADERS, cookies=COOKIES, params=params)
+        # Make the request to KCEX
+        # timeout=10 prevents the app from hanging forever if KCEX is slow
+        response = requests.get(API_URL, headers=HEADERS, cookies=COOKIES, params=params, timeout=10)
         
+        # Check if the response was successful
         if response.status_code == 200:
-            data_json = response.json()
+            json_data = response.json()
             
-            # 3. Extract the Twitter URL from the response
-            # Based on your example: {"code":0, "data":"https://api.twitter.com/..."}
-            redirect_url = data_json.get("data")
+            # Extract the Twitter authorization URL
+            twitter_url = json_data.get("data")
             
-            if redirect_url:
-                # 4. Redirect the user's browser to the Twitter OAuth page
-                return redirect(redirect_url)
+            if twitter_url:
+                # Redirect the actual user to Twitter
+                return redirect(twitter_url)
             else:
-                return "Error: No redirect URL found in response data.", 500
+                return jsonify({"error": "Twitter URL not found in response", "raw_body": json_data}), 500
         else:
-            return f"Error: API returned status {response.status_code}", response.status_code
+            return jsonify({
+                "error": "KCEX API returned an error status",
+                "status_code": response.status_code,
+                "content": response.text
+            }), response.status_code
 
     except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+        return jsonify({"error": "Internal server error during request", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    # Run the Flask app
-    print("Go to http://127.0.0.1:5000/start-auth to begin.")
-    app.run(debug=True, port=5000)
+    # Railway provides the PORT environment variable. 
+    # We must bind to 0.0.0.0 to be accessible externally.
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
