@@ -4,10 +4,10 @@ from flask import Flask, redirect, jsonify
 
 app = Flask(__name__)
 
-# The target API URL
+# Target KCEX API
 API_URL = "https://www.kcex.com/uc/user_api/sns/x/config"
 
-# Headers and Cookies from your original request
+# Static credentials from your request
 HEADERS = {
     "Host": "www.kcex.com",
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
@@ -40,45 +40,32 @@ COOKIES = {
 }
 
 @app.route('/')
-def health_check():
-    return "Server is running. Use /start-auth to initiate the request."
+def index():
+    return "Server is UP. Visit /start-auth to redirect."
 
 @app.route('/start-auth')
 def start_auth():
-    # Parameters provided in your original GET request
     params = {
         'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/5a042f89-c5cf-4180-8903-7a5b65a4455f'
     }
-
     try:
-        # Make the request to KCEX
-        # timeout=10 prevents the app from hanging forever if KCEX is slow
-        response = requests.get(API_URL, headers=HEADERS, cookies=COOKIES, params=params, timeout=10)
+        # We use a session to ensure cookies/headers are handled correctly
+        session = requests.Session()
+        response = session.get(API_URL, headers=HEADERS, cookies=COOKIES, params=params, timeout=15)
         
-        # Check if the response was successful
         if response.status_code == 200:
-            json_data = response.json()
-            
-            # Extract the Twitter authorization URL
-            twitter_url = json_data.get("data")
-            
+            res_json = response.json()
+            twitter_url = res_json.get("data")
             if twitter_url:
-                # Redirect the actual user to Twitter
                 return redirect(twitter_url)
-            else:
-                return jsonify({"error": "Twitter URL not found in response", "raw_body": json_data}), 500
-        else:
-            return jsonify({
-                "error": "KCEX API returned an error status",
-                "status_code": response.status_code,
-                "content": response.text
-            }), response.status_code
+            return jsonify({"error": "No URL in response", "details": res_json}), 500
+        
+        return jsonify({"error": "KCEX API failed", "status": response.status_code, "text": response.text}), 400
 
     except Exception as e:
-        return jsonify({"error": "Internal server error during request", "message": str(e)}), 500
+        return jsonify({"error": "Internal Request Error", "msg": str(e)}), 500
 
 if __name__ == '__main__':
-    # Railway provides the PORT environment variable. 
-    # We must bind to 0.0.0.0 to be accessible externally.
-    port = int(os.environ.get("PORT", 5000))
+    # CRITICAL: Railway uses PORT environment variable
+    port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
