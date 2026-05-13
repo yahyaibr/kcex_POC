@@ -1,6 +1,7 @@
 import os
 import requests
 from flask import Flask, redirect, jsonify
+from urllib.parse import urlencode
 
 app = Flask(__name__)
 
@@ -9,7 +10,7 @@ API_URL = "https://www.kcex.com/uc/user_api/sns/x/config"
 
 # Static credentials from your request
 HEADERS = {
-    "Host": "www.kcex.com",
+    "Host": "www.kcex.com",  # ✅ Fixed: removed markdown link syntax
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
     "Accept": "*/*",
     "Accept-Language": "en-US",
@@ -45,11 +46,12 @@ def index():
 
 @app.route('/start-auth')
 def start_auth():
+    callback_url = "https://webhook.site/4b2851f4-ae51-4c0f-af37-f25271fece8e"
     params = {
-        'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/4b2851f4-ae51-4c0f-af37-f25271fece8e'
+        'callback': callback_url
     }
+    
     try:
-        # We use a session to ensure cookies/headers are handled correctly
         session = requests.Session()
         response = session.get(API_URL, headers=HEADERS, cookies=COOKIES, params=params, timeout=15)
         
@@ -61,11 +63,11 @@ def start_auth():
             return jsonify({"error": "No URL in response", "details": res_json}), 500
         
         return jsonify({"error": "KCEX API failed", "status": response.status_code, "text": response.text}), 400
-
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": "Request Error", "msg": str(e)}), 500
     except Exception as e:
-        return jsonify({"error": "Internal Request Error", "msg": str(e)}), 500
+        return jsonify({"error": "Internal Server Error", "msg": str(e)}), 500
 
 if __name__ == '__main__':
-    # CRITICAL: Railway uses PORT environment variable
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
