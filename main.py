@@ -46,7 +46,7 @@ def index():
 
 @app.route('/start-auth')
 def start_auth():
-    callback_url = "https://webhook.site/4b2851f4-ae51-4c0f-af37-f25271fece8e"
+    callback_url = "https%3A%2F%2Fwww.kcex.com%2Fauth%2Fcallback%3Fredirect%3dhttps%3a%2f%2fwebhook.site%2f4b2851f4-ae51-4c0f-af37-f25271fece8e"
     params = {
         'callback': callback_url
     }
