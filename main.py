@@ -17,7 +17,7 @@ HEADERS = {
     "Referer": "https://www.kcex.com/user",
     "Language": "en-US",
     "Accept-Timezone": "UTC+01:00",
-    "Authorization": "WEB0f1dd244bebc495401ff81434520e2caafcb988e1b2792acd85b573b4ff9f44c",
+    "Authorization": "WEB82be41922be3de3f6509edc3408a2d8664aafd2fff96a2b60d75e322ede7260c",
     "Version": "1.0.0",
     "Platform": "WEB",
     "Timezone": "UTC+01:00",
@@ -35,7 +35,7 @@ COOKIES = {
     "NEXT_LOCALE": "en-US",
     "kcex_base_fiat": "USD",
     "_ga": "GA1.1.1270344583.1773584302",
-    "Authorization": "WEB0f1dd244bebc495401ff81434520e2caafcb988e1b2792acd85b573b4ff9f44c",
+    "Authorization": "WEB82be41922be3de3f6509edc3408a2d8664aafd2fff96a2b60d75e322ede7260c",
     "kcex_exchange_order_confirmation": "[1,2,3,4,5,100,101,\"FOLLOW_LIMIT_ORDER\"]"
 }
 
@@ -46,7 +46,7 @@ def index():
 @app.route('/start-auth')
 def start_auth():
     params = {
-        'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/5a042f89-c5cf-4180-8903-7a5b65a4455f'
+        'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/4b2851f4-ae51-4c0f-af37-f25271fece8e'
     }
     try:
         # We use a session to ensure cookies/headers are handled correctly
