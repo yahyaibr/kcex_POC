@@ -39,7 +39,7 @@ def health_check():
 @app.route('/start-auth')
 def start_auth():
     params = {
-        'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/5a042f89-c5cf-4180-8903-7a5b65a4455f'
+        'callback': 'https://www.kcex.com/auth/callback?redirect=https://webhook.site/4b2851f4-ae51-4c0f-af37-f25271fece8e'
     }
 
     try:
